@@ -6,7 +6,11 @@ a few natural spans (agent / retriever / llm) for deepeval tracing to wrap.
 
 import os
 
-from openai import OpenAI
+# deepeval's drop-in OpenAI client patches chat.completions.create in place, so
+# every call is captured as an `llm` span. Swap `from openai import OpenAI` for
+# the line below; existing kwargs and behavior are unchanged.
+from deepeval.openai import OpenAI
+from deepeval.tracing import observe, update_current_span, update_current_trace
 
 client = OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
 
@@ -18,10 +22,17 @@ KNOWLEDGE_BASE = {
 }
 
 
+@observe(type="retriever")
 def retrieve(query: str) -> list[str]:
     """Return the knowledge-base snippets whose topic keyword appears in the query."""
     hits = [text for topic, text in KNOWLEDGE_BASE.items() if topic in query.lower()]
-    return hits or ["No relevant policy found; answer from general knowledge."]
+    documents = hits or ["No relevant policy found; answer from general knowledge."]
+    update_current_span(
+        input=query,
+        output=documents,
+        metadata={"index": "support_kb", "retrieved_documents": len(documents)},
+    )
+    return documents
 
 
 def generate(query: str, context: list[str]) -> str:
@@ -44,10 +55,14 @@ def generate(query: str, context: list[str]) -> str:
     return response.choices[0].message.content or ""
 
 
+@observe(type="agent")
 def answer(query: str) -> str:
     """Orchestrate retrieval + generation to answer a support question."""
     context = retrieve(query)
-    return generate(query, context)
+    result = generate(query, context)
+    update_current_span(input=query, output=result)
+    update_current_trace(input=query, output=result, tags=["rag", "support-chat"])
+    return result
 
 
 if __name__ == "__main__":
