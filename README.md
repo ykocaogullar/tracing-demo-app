@@ -13,3 +13,15 @@ pip install -r requirements.txt
 export OPENAI_API_KEY=sk-...
 python main.py
 ```
+
+## Tracing
+
+The app is instrumented with [deepeval](https://www.confident-ai.com) tracing:
+the `deepeval.openai.OpenAI` drop-in client captures each LLM call as an `llm`
+span, while `retrieve` and `answer` are wrapped as `retriever` and `agent`
+spans. Set `CONFIDENT_API_KEY` to send traces to Confident AI's Observatory:
+
+```bash
+export CONFIDENT_API_KEY=confident_...
+```
+
