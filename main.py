@@ -2,11 +2,22 @@
 
 `answer()` orchestrates a retrieval step and an LLM generation step, so there are
 a few natural spans (agent / retriever / llm) for deepeval tracing to wrap.
+
+Tracing: the OpenAI client is imported from `deepeval.openai`, which is
+DeepEval's native OpenAI integration. It transparently emits an `llm` span for
+every chat completion, so no manual instrumentation is needed around the model
+call itself. The surrounding retrieval and orchestration steps are wrapped with
+`@observe` so the full trace (agent -> retriever -> llm) is visible in Confident
+AI. Set `CONFIDENT_API_KEY` in the environment to send traces to Confident AI.
 """
 
 import os
 
-from openai import OpenAI
+# Native DeepEval integration: this is a drop-in replacement for
+# `from openai import OpenAI` that auto-traces every chat completion as an
+# `llm` span. See https://deepeval.com/integrations/frameworks/openai
+from deepeval.openai import OpenAI
+from deepeval.tracing import observe, update_current_span, update_current_trace
 
 client = OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
 
@@ -18,14 +29,25 @@ KNOWLEDGE_BASE = {
 }
 
 
+@observe(type="retriever")
 def retrieve(query: str) -> list[str]:
     """Return the knowledge-base snippets whose topic keyword appears in the query."""
     hits = [text for topic, text in KNOWLEDGE_BASE.items() if topic in query.lower()]
-    return hits or ["No relevant policy found; answer from general knowledge."]
+    documents = hits or ["No relevant policy found; answer from general knowledge."]
+    update_current_span(
+        input=query,
+        output=documents,
+        metadata={"index": "support_kb", "retrieved_documents": len(documents)},
+    )
+    return documents
 
 
 def generate(query: str, context: list[str]) -> str:
-    """Call the LLM with the retrieved context to answer the question."""
+    """Call the LLM with the retrieved context to answer the question.
+
+    The `llm` span for this call is created automatically by the
+    `deepeval.openai` integration; no manual span is needed here.
+    """
     context_block = "\n".join(f"- {c}" for c in context)
     response = client.chat.completions.create(
         model="gpt-4o-mini",
@@ -44,10 +66,13 @@ def generate(query: str, context: list[str]) -> str:
     return response.choices[0].message.content or ""
 
 
+@observe(type="agent")
 def answer(query: str) -> str:
     """Orchestrate retrieval + generation to answer a support question."""
     context = retrieve(query)
-    return generate(query, context)
+    output = generate(query, context)
+    update_current_trace(input=query, output=output, tags=["rag", "support-chat"])
+    return output
 
 
 if __name__ == "__main__":
