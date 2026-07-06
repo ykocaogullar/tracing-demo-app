@@ -11,5 +11,10 @@ A tiny RAG-style support Q&A app used to test Confident AI's automatic tracing P
 ```bash
 pip install -r requirements.txt
 export OPENAI_API_KEY=sk-...
+export CONFIDENT_API_KEY=...  # optional: send deepeval traces to Confident AI
 python main.py
 ```
+
+The app is instrumented with [deepeval](https://deepeval.com) tracing. Set
+`CONFIDENT_API_KEY` to see the agent / retriever / llm spans in the Confident AI
+Observatory.
