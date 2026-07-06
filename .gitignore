@@ -1,0 +1,6 @@
+__pycache__/
+*.pyc
+
+# Local tooling artifacts (deepeval-tracing skill install)
+.agents/
+skills-lock.json
