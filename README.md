@@ -11,5 +11,8 @@ A tiny RAG-style support Q&A app used to test Confident AI's automatic tracing P
 ```bash
 pip install -r requirements.txt
 export OPENAI_API_KEY=sk-...
+export CONFIDENT_API_KEY=confident_...
 python main.py
 ```
+
+Tracing is enabled automatically through `deepeval` when `CONFIDENT_API_KEY` is set.
