@@ -7,8 +7,14 @@ a few natural spans (agent / retriever / llm) for deepeval tracing to wrap.
 import os
 
 from openai import OpenAI
+from deepeval.tracing import observe, trace_manager
+from deepeval.tracing.trace_context import next_llm_span
 
 client = OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
+trace_manager.configure(
+    confident_api_key=os.environ.get("CONFIDENT_API_KEY"),
+    openai_client=client,
+)
 
 # A stand-in "knowledge base". A real app would query a vector DB here.
 KNOWLEDGE_BASE = {
@@ -18,6 +24,7 @@ KNOWLEDGE_BASE = {
 }
 
 
+@observe(type="retriever")
 def retrieve(query: str) -> list[str]:
     """Return the knowledge-base snippets whose topic keyword appears in the query."""
     hits = [text for topic, text in KNOWLEDGE_BASE.items() if topic in query.lower()]
@@ -44,10 +51,12 @@ def generate(query: str, context: list[str]) -> str:
     return response.choices[0].message.content or ""
 
 
+@observe(type="agent")
 def answer(query: str) -> str:
     """Orchestrate retrieval + generation to answer a support question."""
     context = retrieve(query)
-    return generate(query, context)
+    with next_llm_span(retrieval_context=context):
+        return generate(query, context)
 
 
 if __name__ == "__main__":
