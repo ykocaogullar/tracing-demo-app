@@ -13,3 +13,16 @@ pip install -r requirements.txt
 export OPENAI_API_KEY=sk-...
 python main.py
 ```
+
+## HTTP API
+
+`api.py` serves the same `answer()` path over HTTP:
+
+```bash
+pip install -r requirements.txt
+export OPENAI_API_KEY=sk-...
+uvicorn api:app --reload
+curl -X POST localhost:8000/chat \
+  -H 'content-type: application/json' \
+  -d '{"question": "How long do refunds take?"}'
+```
