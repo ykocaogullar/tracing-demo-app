@@ -1,14 +1,15 @@
-"""A tiny RAG-style support Q&A app.
-
-`answer()` orchestrates a retrieval step and an LLM generation step, so there are
-a few natural spans (agent / retriever / llm) for deepeval tracing to wrap.
-"""
+"""A tiny RAG-style support Q&A app."""
 
 import os
 
 from openai import OpenAI
+from deepeval.tracing import observe, trace_manager, update_current_span, update_current_trace
 
-client = OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
+client = OpenAI()
+trace_manager.configure(
+    openai_client=client,
+    confident_api_key=os.environ.get("CONFIDENT_API_KEY"),
+)
 
 # A stand-in "knowledge base". A real app would query a vector DB here.
 KNOWLEDGE_BASE = {
@@ -21,7 +22,14 @@ KNOWLEDGE_BASE = {
 def retrieve(query: str) -> list[str]:
     """Return the knowledge-base snippets whose topic keyword appears in the query."""
     hits = [text for topic, text in KNOWLEDGE_BASE.items() if topic in query.lower()]
-    return hits or ["No relevant policy found; answer from general knowledge."]
+    results = hits or ["No relevant policy found; answer from general knowledge."]
+    update_current_span(
+        input=query,
+        output=results,
+        retrieval_context=results,
+        metadata={"knowledge_base_topics": list(KNOWLEDGE_BASE)},
+    )
+    return results
 
 
 def generate(query: str, context: list[str]) -> str:
@@ -44,10 +52,16 @@ def generate(query: str, context: list[str]) -> str:
     return response.choices[0].message.content or ""
 
 
-def answer(query: str) -> str:
+@observe(type="agent")
+def answer(query: str, test_case_id: str | None = None) -> str:
     """Orchestrate retrieval + generation to answer a support question."""
+    update_current_trace(tags=["rag", "support-qna"], metadata={"route": "/chat"})
+    if test_case_id:
+        update_current_trace(test_case_id=test_case_id)
     context = retrieve(query)
-    return generate(query, context)
+    answer_text = generate(query, context)
+    update_current_span(input={"question": query}, output={"answer": answer_text})
+    return answer_text
 
 
 if __name__ == "__main__":

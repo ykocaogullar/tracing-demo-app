@@ -1,3 +1,4 @@
+deepeval
 openai
 fastapi
 uvicorn

@@ -14,6 +14,7 @@ app = FastAPI(title="tracing-demo-app")
 
 class ChatRequest(BaseModel):
     question: str
+    testCaseId: str | None = None
 
 
 class ChatResponse(BaseModel):
@@ -23,4 +24,4 @@ class ChatResponse(BaseModel):
 @app.post("/chat", response_model=ChatResponse)
 def chat(request: ChatRequest) -> ChatResponse:
     """Answer one support question."""
-    return ChatResponse(answer=answer(request.question))
+    return ChatResponse(answer=answer(request.question, request.testCaseId))
