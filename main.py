@@ -1,14 +1,15 @@
-"""A tiny RAG-style support Q&A app.
-
-`answer()` orchestrates a retrieval step and an LLM generation step, so there are
-a few natural spans (agent / retriever / llm) for deepeval tracing to wrap.
-"""
+"""A tiny RAG-style support Q&A app."""
 
 import os
 
-from openai import OpenAI
+from deepeval.openai import OpenAI
+from deepeval.tracing import observe, trace_manager, update_current_span, update_current_trace
 
 client = OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
+trace_manager.configure(
+    openai_client=client,
+    confident_api_key=os.environ.get("CONFIDENT_API_KEY"),
+)
 
 # A stand-in "knowledge base". A real app would query a vector DB here.
 KNOWLEDGE_BASE = {
@@ -18,10 +19,13 @@ KNOWLEDGE_BASE = {
 }
 
 
+@observe(type="retriever")
 def retrieve(query: str) -> list[str]:
     """Return the knowledge-base snippets whose topic keyword appears in the query."""
     hits = [text for topic, text in KNOWLEDGE_BASE.items() if topic in query.lower()]
-    return hits or ["No relevant policy found; answer from general knowledge."]
+    result = hits or ["No relevant policy found; answer from general knowledge."]
+    update_current_span(input=query, output=result, retrieval_context=result)
+    return result
 
 
 def generate(query: str, context: list[str]) -> str:
@@ -44,10 +48,14 @@ def generate(query: str, context: list[str]) -> str:
     return response.choices[0].message.content or ""
 
 
+@observe(type="agent")
 def answer(query: str) -> str:
     """Orchestrate retrieval + generation to answer a support question."""
+    update_current_trace(input=query)
     context = retrieve(query)
-    return generate(query, context)
+    output = generate(query, context)
+    update_current_trace(output=output)
+    return output
 
 
 if __name__ == "__main__":
