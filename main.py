@@ -5,8 +5,10 @@ a few natural spans (agent / retriever / llm) for deepeval tracing to wrap.
 """
 
 import os
+from typing import Optional
 
-from openai import OpenAI
+from deepeval.openai import OpenAI
+from deepeval.tracing import observe, update_current_trace
 
 client = OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
 
@@ -18,6 +20,7 @@ KNOWLEDGE_BASE = {
 }
 
 
+@observe(type="retriever")
 def retrieve(query: str) -> list[str]:
     """Return the knowledge-base snippets whose topic keyword appears in the query."""
     hits = [text for topic, text in KNOWLEDGE_BASE.items() if topic in query.lower()]
@@ -44,8 +47,13 @@ def generate(query: str, context: list[str]) -> str:
     return response.choices[0].message.content or ""
 
 
-def answer(query: str) -> str:
+@observe(type="agent")
+def answer(query: str, test_case_id: Optional[str] = None) -> str:
     """Orchestrate retrieval + generation to answer a support question."""
+    update_current_trace(
+        confident_api_key=os.environ.get("CONFIDENT_API_KEY"),
+        test_case_id=test_case_id,
+    )
     context = retrieve(query)
     return generate(query, context)
 

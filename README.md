@@ -11,6 +11,7 @@ A tiny RAG-style support Q&A app used to test Confident AI's automatic tracing P
 ```bash
 pip install -r requirements.txt
 export OPENAI_API_KEY=sk-...
+export CONFIDENT_API_KEY=ck-...
 python main.py
 ```
 
@@ -21,6 +22,7 @@ python main.py
 ```bash
 pip install -r requirements.txt
 export OPENAI_API_KEY=sk-...
+export CONFIDENT_API_KEY=ck-...
 uvicorn api:app --reload
 curl -X POST localhost:8000/chat \
   -H 'content-type: application/json' \
