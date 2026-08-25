@@ -4,12 +4,13 @@ A tiny RAG-style support Q&A app used to test Confident AI's automatic tracing P
 
 - `retrieve(query)` — pulls matching snippets from a small in-memory knowledge base.
 - `generate(query, context)` — calls the LLM with the retrieved context.
-- `answer(query)` — orchestrates retrieval + generation.
+- `answer(query)` — orchestrates retrieval + generation and is traced as the root agent span.
 
 ## Run
 
 ```bash
 pip install -r requirements.txt
 export OPENAI_API_KEY=sk-...
+export CONFIDENT_API_KEY=confident_us_...
 python main.py
 ```
