@@ -24,5 +24,7 @@ export OPENAI_API_KEY=sk-...
 uvicorn api:app --reload
 curl -X POST localhost:8000/chat \
   -H 'content-type: application/json' \
-  -d '{"question": "How long do refunds take?"}'
+  -d '{"question": "How long do refunds take?", "testCaseId": "example-case-id"}'
 ```
+
+Set `CONFIDENT_API_KEY` in the environment before running to send traces to Confident AI.
