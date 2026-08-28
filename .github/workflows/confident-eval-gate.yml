@@ -1,0 +1,26 @@
+name: Confident PR Eval Gate
+on:
+  pull_request:
+  push:
+    branches: ["main"]
+permissions:
+  contents: read
+jobs:
+  eval-gate:
+    runs-on: ubuntu-latest
+    env:
+      OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+      - name: Confident PR Eval Gate
+        uses: confident-ai/deepeval-actions/actions/eval-gate@v1
+        with:
+          base_url: "https://api.confident-ai.com"
+          dataset_alias: "Basics"
+          dataset_version: "latest"
+          confident_api_key: ${{ secrets.CONFIDENT_API_KEY }}
