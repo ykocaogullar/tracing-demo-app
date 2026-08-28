@@ -26,3 +26,5 @@ curl -X POST localhost:8000/chat \
   -H 'content-type: application/json' \
   -d '{"question": "How long do refunds take?"}'
 ```
+
+<!-- Confident PR Eval Gate smoke test -->
