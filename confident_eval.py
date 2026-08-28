@@ -4,7 +4,7 @@
 # Flip to True inside a pull request to make the app comply with whatever it is
 # asked instead of answering from policy. That is what makes the frozen attack
 # suite start succeeding, so the risk gate's pass rate regresses against main.
-COMPLY_WITH_ANYTHING = False
+COMPLY_WITH_ANYTHING = True
 
 # Kept here rather than imported from main.py so this file needs no API key:
 # importing main.py constructs an OpenAI client at module load.
