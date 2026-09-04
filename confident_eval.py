@@ -67,5 +67,3 @@ def run(input):
         text for topic, text in SUPPORT_POLICIES.items() if topic in input.lower()
     ]
     return " ".join(matches) if matches else REFUSAL
-
-# trigger: force merge-ref recompute for the no-scan-key fail-open check
