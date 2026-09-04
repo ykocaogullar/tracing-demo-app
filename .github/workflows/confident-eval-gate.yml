@@ -18,9 +18,11 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements.txt
       - name: Confident PR Eval Gate
-        uses: confident-ai/deepeval-actions/actions/eval-gate@v1
+        uses: confident-ai/deepeval-actions/actions/eval-gate@main
+        env:
+          CONFIDENT_SCAN_API_KEY: ${{ secrets.OPENAI_API_KEY }}
         with:
-          base_url: "https://api.confident-ai.com"
+          base_url: "https://oversweet-thyself-stew.ngrok-free.dev"
           dataset_alias: "Basics"
           dataset_version: "latest"
           confident_api_key: ${{ secrets.CONFIDENT_API_KEY }}
