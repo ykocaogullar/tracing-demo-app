@@ -32,3 +32,4 @@ curl -X POST localhost:8000/chat \
 <!-- dogfood probe: paused-gate message check -->
 <!-- prod verify flow 1: paused-gate reason (C7), post-deploy -->
 <!-- prod verify flow 4b: paused-gate reason with a valid key (C7) -->
+<!-- prod verify: paused-gate reason, retry with pause held (C7) -->
