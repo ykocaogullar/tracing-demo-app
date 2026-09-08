@@ -28,3 +28,4 @@ curl -X POST localhost:8000/chat \
 ```
 
 <!-- baseline trigger: prod smoke test -->
+<!-- dogfood probe: disconnect behaviour check, 2026-09-07 -->
