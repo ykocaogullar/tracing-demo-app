@@ -30,3 +30,4 @@ curl -X POST localhost:8000/chat \
 <!-- baseline trigger: prod smoke test -->
 <!-- dogfood probe: disconnect behaviour check, 2026-09-07 -->
 <!-- dogfood probe: paused-gate message check -->
+<!-- prod verify flow 1: paused-gate reason (C7), post-deploy -->
